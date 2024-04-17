@@ -73,8 +73,8 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] == '{' and pline[-1] =='}'\
-                            and type(eval(pline)) is dict:
+                    if pline[0] == '{' and pline[-1] == '}'\
+                            and type(eval(pline)) == dict:
                         _args = pline
                     else:
                         _args = pline.replace(',', '')
@@ -115,35 +115,34 @@ class HBNBCommand(cmd.Cmd):
 
     def do_create(self, args):
         """ Create an object of any class"""
-        try:
-          class_name = args.split(" ")[0]
-        except IndexError:
-          pass
-        if not class_name:
+        args = args.split()
+        if not args:
             print("** class name missing **")
             return
-        elif class_name not in HBNBCommand.classes:
+        elif args[0] not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        all_list = args.split(" ")
-
-        new_instance = eval(class_name)()
-        for i in range(1, len(all_list)):
-          key, value = tuple(all_list[i].split("="))
-          if value.startwith('"'):
-            value = value.strip('"').replace("_", " ")
-          else:
-            try:
-              value = eval(value)
-            except Exception:
-              print(f"** couldnt evaluate {value}")
-              pass
-          if hasattr(new_instance, key):
-            setattr(new_instance, key, value)
+        new_instance = HBNBCommand.classes[args[0]]()
+        for j in range(1, len(args)):
+            if (args[j].count("=") == 1):
+                attr = args[j].split("=")
+                if type(attr[0] == str):
+                    if (attr[1].count('"') == 2):
+                        if (attr[1].count('_') > 0):
+                            attr[1] = attr[1].replace('_', ' ')
+                        new_instance.__dict__.update({
+                            attr[0]: attr[1].strip('"')})
+                    elif (attr[1].replace('.', '', 1).isdigit()
+                          or attr[1].replace('.', '', 1).replace('-', '', 1)):
+                        if attr[1].isdigit():
+                            new_instance.__dict__.update({
+                                   attr[0]: int(attr[1])})
+                        else:
+                            new_instance.__dict__.update({
+                                    attr[0]: float(attr[1])})
         storage.new(new_instance)
+        storage.save()
         print(new_instance.id)
-        new_instance.save()
-        
 
     def help_create(self):
         """ Help information for the create method """
@@ -338,6 +337,7 @@ class HBNBCommand(cmd.Cmd):
         """ Help information for the update class """
         print("Updates an object with new information")
         print("Usage: update <className> <id> <attName> <attVal>\n")
+
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
